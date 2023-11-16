@@ -93,7 +93,7 @@ pub async fn print_team_tree(args: &CmdArgs) {
 fn print_nested_tree(tree: &Graph<TeamTreeNode, u8, petgraph::Directed>, node: NodeIndex) {
   let mut current_node = node;
   // let mut parents: Vec<&TeamTreeNode> = vec![&tree[current_node]];
-  let mut spacer: usize = 0;
+  let mut stack_of_parents: Vec<TeamId> = vec![];
 
   let mut dfs = Dfs::new(tree, current_node);
   'print_loop: while let Some(next_node) = dfs.next(tree) {
@@ -105,14 +105,18 @@ fn print_nested_tree(tree: &Graph<TeamTreeNode, u8, petgraph::Directed>, node: N
     }
 
     if next_node_ref.parent_id.is_none() {
-      spacer = 0
+      stack_of_parents.pop();
     } else if prev_node_ref.id == next_node_ref.parent_id.unwrap() {
-      spacer += 1;
-    } else {
-      spacer -= 1;
+      stack_of_parents.push(prev_node_ref.id);
+    } else if stack_of_parents.last().unwrap() != &next_node_ref.parent_id.unwrap() {
+      stack_of_parents.pop();
     }
 
-    println!("{}- {}", "  ".repeat(spacer), next_node_ref.name);
+    println!(
+      "{}- {}",
+      "  ".repeat(stack_of_parents.len()),
+      next_node_ref.name
+    );
 
     current_node = next_node;
   }
